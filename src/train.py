@@ -137,7 +137,7 @@ def run_training() -> None:
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         peft_config=peft_config,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         formatting_func=formatting_prompts_func,
         args=training_args,
     )
