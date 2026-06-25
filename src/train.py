@@ -99,7 +99,7 @@ def run_training() -> None:
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_compute_dtype=torch.bfloat16,
         bnb_4bit_use_double_quant=True,
     )
 
@@ -107,6 +107,7 @@ def run_training() -> None:
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         quantization_config=bnb_config,
+        torch_dtype=torch.bfloat16,
         device_map="auto",
         trust_remote_code=True
     )
@@ -142,8 +143,8 @@ def run_training() -> None:
         lr_scheduler_type="cosine",
         warmup_ratio=0.03,
         logging_steps=10,
-        fp16=True,
-        bf16=False,
+        fp16=False,
+        bf16=True,
         logging_dir="./runs/logs",
         report_to="none",
         load_best_model_at_end=True,
