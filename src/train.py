@@ -16,8 +16,6 @@ from transformers import (
 )
 from peft import (
     LoraConfig,
-    get_peft_model,
-    prepare_model_for_kbit_training,
     TaskType,
 )
 from trl import SFTTrainer
@@ -91,6 +89,7 @@ def run_training() -> None:
     
     # Enable gradient checkpointing and prepare layers for low-precision adapters
     model.config.use_cache = False
+    from peft import prepare_model_for_kbit_training
     model = prepare_model_for_kbit_training(model)
 
     print("[INFO] Configuring Parameter-Efficient LoRA Adapters...")
@@ -103,10 +102,6 @@ def run_training() -> None:
         bias="none",
         task_type=TaskType.CAUSAL_LM
     )
-
-    model = get_peft_model(model, peft_config)
-    print(f"[INFO] Trainable Parameter Footprint Summary:")
-    model.print_trainable_parameters()
 
     print("[INFO] Structuring Trainer Arguments hyperparameters...")
     training_args = TrainingArguments(
@@ -132,12 +127,15 @@ def run_training() -> None:
     )
 
     print("[INFO] Starting SFTTrainer execution...")
+    # Inject maximum token length parameters straight into the arguments payload for TRL compliance
+    training_args.max_seq_length = 512
+
     trainer = SFTTrainer(
         model=model,
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         peft_config=peft_config,
-        processing_class=tokenizer,
+        processing_class=tokenizer,  # Updated for current TRL conventions
         formatting_func=formatting_prompts_func,
         args=training_args,
     )
