@@ -137,7 +137,6 @@ def run_training() -> None:
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         peft_config=peft_config,
-        max_seq_length=512,
         tokenizer=tokenizer,
         formatting_func=formatting_prompts_func,
         args=training_args,
