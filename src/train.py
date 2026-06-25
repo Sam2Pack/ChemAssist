@@ -25,18 +25,43 @@ from datasets import load_dataset
 def formatting_prompts_func(example: dict) -> list[str]:
     """
     Formats incoming dataset rows into an explicit text prompt structure for training.
+    Handles both batch structures and single-record dictionary streaming cleanly.
     
     Args:
-        example: Dictionary containing text records mapped from the JSON file.
+        example: Dictionary containing text records mapped from the dataset.
         
     Returns:
         List containing structured instruction-following prompt fields.
     """
     output_texts = []
-    for i in range(len(example["instruction"])):
-        instruction = example["instruction"][i]
-        input_context = example["input"][i]
-        output = example["output"][i]
+    
+    # Check if the inputs are a batch (lists) or a single row (strings)
+    if isinstance(example["instruction"], list):
+        # Batch processing execution mode
+        iterations = len(example["instruction"])
+        for i in range(iterations):
+            instruction = example["instruction"][i]
+            input_context = example["input"][i] if "input" in example and example["input"][i] else ""
+            output = example["output"][i]
+            
+            if input_context:
+                text = (
+                    f"Below is an instruction that describes a task, paired with an input that provides further context.\n"
+                    f"Write a response that appropriately completes the request.\n\n"
+                    f"### Instruction:\n{instruction}\n\n### Input:\n{input_context}\n\n### Response:\n{output}"
+                )
+            else:
+                text = (
+                    f"Below is an instruction that describes a task.\n"
+                    f"Write a response that appropriately completes the request.\n\n"
+                    f"### Instruction:\n{instruction}\n\n### Response:\n{output}"
+                )
+            output_texts.append(text)
+    else:
+        # Single record execution mode (dictionary streaming fallback)
+        instruction = example["instruction"]
+        input_context = example.get("input", "")
+        output = example["output"]
         
         if input_context:
             text = (
@@ -51,6 +76,7 @@ def formatting_prompts_func(example: dict) -> list[str]:
                 f"### Instruction:\n{instruction}\n\n### Response:\n{output}"
             )
         output_texts.append(text)
+        
     return output_texts
 
 
