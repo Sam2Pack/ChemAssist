@@ -22,22 +22,20 @@ from trl import SFTTrainer
 from datasets import load_dataset
 
 
-def formatting_prompts_func(example: dict) -> list[str]:
+def formatting_prompts_func(example: dict) -> Any:
     """
     Formats incoming dataset rows into an explicit text prompt structure for training.
-    Handles both batch structures and single-record dictionary streaming cleanly.
+    Returns a list of strings if given a batch, or a single string if given a single example.
     
     Args:
         example: Dictionary containing text records mapped from the dataset.
         
     Returns:
-        List containing structured instruction-following prompt fields.
+        A string (for single example streaming) or list of strings (for batched data).
     """
-    output_texts = []
-    
     # Check if the inputs are a batch (lists) or a single row (strings)
     if isinstance(example["instruction"], list):
-        # Batch processing execution mode
+        output_texts = []
         iterations = len(example["instruction"])
         for i in range(iterations):
             instruction = example["instruction"][i]
@@ -57,8 +55,10 @@ def formatting_prompts_func(example: dict) -> list[str]:
                     f"### Instruction:\n{instruction}\n\n### Response:\n{output}"
                 )
             output_texts.append(text)
+        return output_texts
+        
     else:
-        # Single record execution mode (dictionary streaming fallback)
+        # Single record execution mode: return a single raw string
         instruction = example["instruction"]
         input_context = example.get("input", "")
         output = example["output"]
@@ -75,9 +75,7 @@ def formatting_prompts_func(example: dict) -> list[str]:
                 f"Write a response that appropriately completes the request.\n\n"
                 f"### Instruction:\n{instruction}\n\n### Response:\n{output}"
             )
-        output_texts.append(text)
-        
-    return output_texts
+        return text
 
 
 def run_training() -> None:
